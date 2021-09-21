@@ -12,7 +12,7 @@ from gui.widget import Widget, PropertyWidget, AttributeValueType
 import numpy as np
 import networkx as nx
 
-from demo.lens import real_cam, color_buffer, taichi_render
+from cameray.renderer import real_cam, color_buffer, taichi_render
 
 class LenseCanvasWidget(Widget):
     def __init__(self, *, parent: int, film_height=24.0, callback:Callable[[None],None]=None):
@@ -89,7 +89,7 @@ class LenseCanvasWidget(Widget):
             if is_stop:
                 self._draw_aperture_stop(z, r, color=[255.0, 255.0, 0.0], thickness=4.0)
             else:
-                a, b = self._draw_arch(z, lenses[i][0], 6.0)
+                a, b = self._draw_arch(z, lenses[i][0], min(min(6.0, lenses[i][3]), abs(lenses[i][0])))
                 if i > 0 and lenses[i - 1][2] != 1 and lenses[i-1][2] != 0:
                     self._draw_line(a, first)
                     self._draw_line(b, last)  # draw connection between element surface
@@ -168,6 +168,8 @@ class LenseCanvasWidget(Widget):
         Returns the two end points of the arch
         """
         center = z - curvature_radius
+        if abs(curvature_radius) < 1e-5:
+            return [z, 0.0], [z, 0.0]
         half = math.asin(aperture_radius/curvature_radius)
         min_theta = -2 * half
         max_theta = 2 * half

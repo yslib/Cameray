@@ -2,8 +2,6 @@ import dearpygui.dearpygui as dpg
 from dearpygui.logger import mvLogger
 from typing import Callable, Any
 
-from base import paramtype
-
 _logger = None
 
 def init_global_logger(parent:int):

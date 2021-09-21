@@ -2,7 +2,7 @@ import math
 import taichi as ti
 import numpy as np
 from typing import List, Dict
-from demo.renderer_utils import refract, intersect_sphere
+from .renderer_utils import refract
 
 max_elements = 30
 max_draw_rays = 20
