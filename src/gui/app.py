@@ -43,26 +43,6 @@ class App:
         self._gui_id_app:int = dpg.generate_uuid()
         self._lense_designer_widget:LensDesignerWidget = None
 
-
-    def _gui_add_image_preview(self, parent)->int:
-        """
-        Image Preview Widget
-        Returns the container's id
-        """
-        with dpg.child(autosize_x=True, height=200,horizontal_scrollbar=True, parent=parent): # image series preview
-            with dpg.group(horizontal=True) as image_container_id:
-                dpg.add_text(label='test',parent=image_container_id)
-                pass
-        return image_container_id
-
-    def _gui_add_popup(self, text:str, title='Window'):
-        x = dpg.get_viewport_client_width()
-        y = dpg.get_viewport_client_height()
-        with dpg.window(label=title, modal=True, pos=[x/2,y/2]) as modal_id:
-            dpg.add_text(text)
-            dpg.add_separator()
-            dpg.add_button(parent=modal_id,label="OK", width=75, callback=lambda: dpg.delete_item(modal_id))
-
     def _gui_viewport_resize_event(self, sender, a, u):
         """
         Keep the root widget fill up the viewport
