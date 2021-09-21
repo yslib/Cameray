@@ -37,12 +37,12 @@ All dependecies could be install by **pip** when package import error is encount
 Roadmap
 ---
 
-  -[] Stablity
+  - [ ] Stablity
 
-  -[] A more realistic camera model considering general optical spectrum
+  - [ ] A more realistic camera model considering general optical spectrum
 
-  -[] General renderer
+  - [ ] General renderer
 
-  -[] A more detail 2D camera illustration. (More kinds of rays and lens data)
+  - [ ] A more detail 2D camera illustration. (More kinds of rays and lens data)
 
-  -[] Undo/Redo for Editor
+  - [ ] Undo/Redo for Editor
