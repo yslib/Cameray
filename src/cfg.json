@@ -1,0 +1,13 @@
+{
+	"Albums":[
+		{
+			"InputDir":"",
+			"Files":[
+				"../data/sunset_low.CR2",
+				"../data/sunset_nml.CR2",
+				"../data/sunset_high.CR2"],
+			"Preset":{
+			}
+		}
+	]
+}
