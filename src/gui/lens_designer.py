@@ -1,20 +1,17 @@
 import math
-import PIL
 import dearpygui.dearpygui as dpg
-from numpy.lib.function_base import meshgrid
 import taichi as ti
 
-from . import lense_preset
+from . import lens_preset
 from typing import List, Any, Callable, Dict
 from base.msg_queue import msg
 from gui.widget import Widget, PropertyWidget, AttributeValueType
-# from demo.realistic import RealisticCamera
 import numpy as np
 import networkx as nx
 
 from cameray.renderer import real_cam, color_buffer, taichi_render
 
-class LenseCanvasWidget(Widget):
+class LensCanvasWidget(Widget):
     def __init__(self, *, parent: int, film_height=24.0, callback:Callable[[None],None]=None):
         super().__init__(parent=parent, callback=callback)
         height = 400
@@ -194,11 +191,11 @@ class LenseCanvasWidget(Widget):
         dpg.delete_item(self.drawlist(), children_only=True)
 
 
-class LenseSurface(Widget):
+class LensSurface(Widget):
     def __init__(self, parent: int, callback:Callable[[None],None]=None):
         super().__init__(parent=parent,callback=callback)
 
-class LenseSphereSurface(LenseSurface):
+class LensSphereSurface(LensSurface):
     curvature_radius = PropertyWidget('Curvature Radius', AttributeValueType.ATTRI_FLOAT,-1000,1100.0,100)
     thickness = PropertyWidget('Thickness', AttributeValueType.ATTRI_FLOAT,0.0,1000.0,100)
     eta = PropertyWidget('Eta', AttributeValueType.ATTRI_FLOAT,0.0,100.0,100)
@@ -469,7 +466,7 @@ class FilmNode(InputNode):
     def get_keep_rendering(self):
         return self._param.render_window
 
-class ApertureSurface(LenseSurface):
+class ApertureSurface(LensSurface):
     thickness = PropertyWidget('Thickness', AttributeValueType.ATTRI_FLOAT,0.0,100.0,100)
     aperture_radius = PropertyWidget('Aperture Radius', AttributeValueType.ATTRI_FLOAT,0.0,100.0,100)
     def __init__(self, parent: int, callback:Callable[[None],None]):
@@ -497,10 +494,10 @@ class ApertureStop(MidNode):
     def get_surface_count(self):
         return 1
 
-class LenseSurfaceGroup(MidNode):
+class LensSurfaceGroup(MidNode):
     def __init__(self,*,name:str,parent:int, update_callback:Callable[[Any], Any]=None):
         super().__init__(name=name, parent=parent,callback=update_callback)
-        self._lense_surface_group:List[LenseSurface] = []
+        self._lense_surface_group:List[LensSurface] = []
         self._surface_data_value_id:List[int] = []
         self.input_attri_item_id = self.add_attribute('surface count', attri_type=dpg.mvNode_Attr_Static)
 
@@ -520,7 +517,7 @@ class LenseSurfaceGroup(MidNode):
         delta = count - cur_count
         if delta > 0:
             for _ in range(delta):
-                surf = LenseSphereSurface(self.input_attri_item_id, callback=self.callback())
+                surf = LensSphereSurface(self.input_attri_item_id, callback=self.callback())
                 self._lense_surface_group.append(surf)
         elif delta < 0:
             for item in self._lense_surface_group[count:]:
@@ -533,7 +530,7 @@ class LenseSurfaceGroup(MidNode):
         self._clear_surface_data()
         surfs = []
         for s in raw_group_data:
-            surf = LenseSphereSurface(self.input_attri_item_id, callback=self.callback())
+            surf = LensSphereSurface(self.input_attri_item_id, callback=self.callback())
             surf.load(s)
             surfs.append(surf)
 
@@ -561,7 +558,7 @@ class LenseSurfaceGroup(MidNode):
 
     @staticmethod
     def create_sphere_lense_group(*, name, parent, group_data:List[List[float]], callback=None):
-        group = LenseSurfaceGroup(name=name, parent=parent,update_callback=callback)
+        group = LensSurfaceGroup(name=name, parent=parent,update_callback=callback)
         group.block_callback(True)
         group.load(group_data)
         group.block_callback(False)
@@ -600,12 +597,12 @@ class ToolBar(Widget):
         dpg.add_same_line()
         self.open_button = dpg.add_button(label='Open')
         dpg.add_same_line()
-        self.preset_combo = dpg.add_combo(list(lense_preset.lense_data.keys()),label='Lense Preset',width=150)
+        self.preset_combo = dpg.add_combo(list(lens_preset.lens_data.keys()),label='Lens Preset',width=150)
         dpg.add_same_line()
         self.auto_arrange = dpg.add_button(label='Auto Arrange')
 
 
-class LenseEditorWidget(Widget):
+class LensEditorWidget(Widget):
     def __init__(self,*,update_callback:Callable[[Any],None], parent: int):
         super().__init__(parent=parent, callback=update_callback)
         self._lense_data:List[Dict[str, List[float]]]= []
@@ -616,9 +613,9 @@ class LenseEditorWidget(Widget):
             self._toolbar = ToolBar(parent=self._widget_id,callback=self.callback())
             with dpg.node_editor(parent=self._widget_id,callback=self._link_add_callback, delink_callback=self._link_delete_callback, height = 800) as self._editor_id:
                 pass
-            dpg.configure_item(self._toolbar.add_node_button,callback = lambda s,a,u:self.add_lense_group(LenseSurfaceGroup(name='LenseGroup', parent=self._editor_id, update_callback=self.callback())))
+            dpg.configure_item(self._toolbar.add_node_button,callback = lambda s,a,u:self.add_lens_group(LensSurfaceGroup(name='LensGroup', parent=self._editor_id, update_callback=self.callback())))
             dpg.configure_item(self._toolbar.clear_all_button,callback = lambda s,a,u:self.clear_lense_group())
-            dpg.configure_item(self._toolbar.preset_combo,callback = lambda s,a,u:self.set_lense_data(lense_preset.lense_data.get(a,[])))
+            dpg.configure_item(self._toolbar.preset_combo,callback = lambda s,a,u:self.set_lense_data(lens_preset.lens_data.get(a,[])))
             dpg.configure_item(self._toolbar.remove_node_button,callback = lambda s,a,u:self.remove_selected_nodes())
             dpg.configure_item(self._toolbar.remove_link_button,callback = lambda s,a,u:self.remove_selected_links())
             dpg.configure_item(self._toolbar.auto_arrange,callback = lambda s,a,u:self.auto_arrange())
@@ -670,15 +667,15 @@ class LenseEditorWidget(Widget):
         self.attri_g.remove_edge(udata['output_end'],udata['input_end'])
         dpg.delete_item(edge_item)
 
-    def _add_node_impl(self, lense_group_node):
-        self.widget_g.add_node(lense_group_node.widget())
-        if isinstance(lense_group_node, SceneNode):
-            self.attri_g.add_node(lense_group_node.output_end())
-        elif isinstance(lense_group_node, FilmNode):
-            self.attri_g.add_node(lense_group_node.input_end())
+    def _add_node_impl(self, lens_group_node):
+        self.widget_g.add_node(lens_group_node.widget())
+        if isinstance(lens_group_node, SceneNode):
+            self.attri_g.add_node(lens_group_node.output_end())
+        elif isinstance(lens_group_node, FilmNode):
+            self.attri_g.add_node(lens_group_node.input_end())
         else:
-            self.attri_g.add_node(lense_group_node.input_end())
-            self.attri_g.add_node(lense_group_node.output_end())
+            self.attri_g.add_node(lens_group_node.input_end())
+            self.attri_g.add_node(lens_group_node.output_end())
 
     def _remove_selected_nodes_impl(self):
         """
@@ -697,17 +694,17 @@ class LenseEditorWidget(Widget):
         for link in selected_links:
             self._remove_link_impl(link)
 
-    def _remove_node_impl(self, lense_group_node):
-        item = lense_group_node.widget()
+    def _remove_node_impl(self, lens_group_node):
+        item = lens_group_node.widget()
         self.widget_g.remove_node(item)
         attri_ends = []
-        if isinstance(lense_group_node, SceneNode):
-            attri_ends.append(lense_group_node.output_end())
-        elif isinstance(lense_group_node, FilmNode):
-            attri_ends.append(lense_group_node.input_end())
+        if isinstance(lens_group_node, SceneNode):
+            attri_ends.append(lens_group_node.output_end())
+        elif isinstance(lens_group_node, FilmNode):
+            attri_ends.append(lens_group_node.input_end())
         else:
-            attri_ends.append(lense_group_node.input_end())
-            attri_ends.append(lense_group_node.output_end())
+            attri_ends.append(lens_group_node.input_end())
+            attri_ends.append(lens_group_node.output_end())
 
         deleted_edge = []
         for end in attri_ends:
@@ -717,7 +714,7 @@ class LenseEditorWidget(Widget):
                 dpg.delete_item(edge_item)
 
         self.attri_g.remove_edges_from(deleted_edge)
-        lense_group_node.delete()
+        lens_group_node.delete()
 
     def _remove_all_node_impl(self):
         list(map(lambda x: self._remove_node_impl(dpg.get_item_user_data(x)), list(self.widget_g.nodes)))
@@ -728,7 +725,7 @@ class LenseEditorWidget(Widget):
         self._add_node_impl(self._scene_node)
         self._add_node_impl(self._film_node)
 
-    def add_lense_group(self, node:LenseSurfaceGroup):
+    def add_lens_group(self, node:LensSurfaceGroup):
         self._add_node_impl(node)
         self._invoke_update(event=EditorEventType.EVENT_NODE_ADD)
 
@@ -794,7 +791,7 @@ class LenseEditorWidget(Widget):
                 stack.append(surf)
             elif surf[2] == 1.0 and surf[0] != 0: # surface end
                 stack.append(surf)
-                lense_group = LenseSurfaceGroup.create_sphere_lense_group(name='LenseGroup',parent=self._editor_id,group_data=stack, callback=self.callback())
+                lense_group = LensSurfaceGroup.create_sphere_lense_group(name='LensGroup',parent=self._editor_id,group_data=stack, callback=self.callback())
                 self._add_node_impl(lense_group)
                 input_end = lense_group.input_end()
                 self._add_link_impl(output_end=output_end,input_end=input_end)
@@ -835,13 +832,13 @@ class LenseEditorWidget(Widget):
 
 
 
-class LenseDesignerWidget(Widget):
+class LensDesignerWidget(Widget):
 
     def __init__(self, parent: int):
         super().__init__(parent=parent)
         with dpg.group(parent=parent,horizontal=False) as self._widget_id:
-            self._lense_canvas: LenseCanvasWidget = LenseCanvasWidget(parent=self.widget(),callback=self._canvas_update)
-            self._node_editor: LenseEditorWidget = LenseEditorWidget(update_callback=self._editor_update, parent=self.widget())
+            self._lense_canvas: LensCanvasWidget = LensCanvasWidget(parent=self.widget(),callback=self._canvas_update)
+            self._node_editor: LensEditorWidget = LensEditorWidget(update_callback=self._editor_update, parent=self.widget())
 
             pos = [0.0, 3.0, 24.0]
             center = [0.0, 0.0, 0.0]

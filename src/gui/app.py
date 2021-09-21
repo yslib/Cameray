@@ -6,7 +6,7 @@ import configparser
 sys.path.append('..')
 import dearpygui.dearpygui as dpg
 from base.msg_queue import get_msg_queue, msg, get_coroutine
-from gui.lense_designer import LenseDesignerWidget
+from gui.lens_designer import LensDesignerWidget
 
 CMR_CONFIG_FILE_PATH = r''
 # CMR_FONT_FILE_PATH = r'C:\Windows\Fonts\msyh.ttc'
@@ -41,7 +41,7 @@ class App:
 
     def _setup_uuid(self):
         self._gui_id_app:int = dpg.generate_uuid()
-        self._lense_designer_widget:LenseDesignerWidget = None
+        self._lense_designer_widget:LensDesignerWidget = None
 
 
     def _gui_add_image_preview(self, parent)->int:
@@ -90,7 +90,7 @@ class App:
                         no_move=True,
                         no_resize=True):
 
-            self._lense_designer_widget:LenseDesignerWidget = LenseDesignerWidget(self._gui_id_app)
+            self._lense_designer_widget:LensDesignerWidget = LensDesignerWidget(self._gui_id_app)
 
     def _window_resize_callback(self, s,a,u):
         pass

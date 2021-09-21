@@ -47,7 +47,7 @@ telephoto250=[
     [-50.945,0,1,37]
 ]
 
-lense_data={
+lens_data={
     'dgauss50':dgauss50,
     'wide22':wide22,
     'telephoto':telephoto,
