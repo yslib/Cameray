@@ -1,6 +1,6 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
-
+print(find_packages())
 setup(  name='cameray',
         install_requires=[
             'networkx',
@@ -8,8 +8,6 @@ setup(  name='cameray',
             'numpy'
         ],
         setup_requires=[],
-        tests_require=[],
-        extra_require={},
         python_requires='>=3.6, <=3.9',
         version='0.0.1',
 
@@ -19,7 +17,15 @@ setup(  name='cameray',
 
         url='https://github.com/yslib/Cameray',
 
-        packages=['src','src.base','src.cameray','src.gui'],
+        package_dir={'':'src'},
+        packages=find_packages(where='src'),
+
+        entry_points={
+            'console_scripts':[
+                'cameray = gui.app:main'
+            ]
+
+        },
 
         classifiers = [
         # https://pypi.org/pypi?%3Aaction=list_classifiers

@@ -11,9 +11,33 @@ Usage
 
 Just clone the repo and go to the root directory and run
 
+You can install it by pip using:
+
 ```shell
-python src/main.py
+python -m pip install cameray
 ```
+
+and then enter
+
+```shell
+cameray
+```
+to run it.
+
+Or, just clone the repo and go to the root directory and run
+
+```shell
+python -m pip install setuptools
+python setup.py sdist
+python setup.py install
+```
+and enter
+
+```shell
+cameray
+```
+
+to run it. (This must )
 
 Credits
 ---
@@ -26,8 +50,6 @@ Dependencies
 ---
 
 **Cameray** only could be run in Python 3.7/3.7/3.8/3.9 because Taichi only support these versions.
-
-All dependecies could be install by **pip** when package import error is encountered.
 
 [1]: (https://github.com/taichi-dev/taichi)
 [2]: (https://github.com/hoffstadt/DearPyGui)

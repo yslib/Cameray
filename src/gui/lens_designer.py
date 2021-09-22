@@ -9,7 +9,7 @@ from gui.widget import Widget, PropertyWidget, AttributeValueType
 import numpy as np
 import networkx as nx
 
-from cameray.renderer import real_cam, color_buffer, taichi_render
+from core.renderer import real_cam, color_buffer, taichi_render
 
 class LensCanvasWidget(Widget):
     def __init__(self, *, parent: int, film_height=24.0, callback:Callable[[None],None]=None):

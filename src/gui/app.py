@@ -104,3 +104,11 @@ class App:
 
             dpg.render_dearpygui_frame()
         dpg.cleanup_dearpygui()
+
+
+def main():
+    App().show()
+
+
+if __name__ == '__main__':
+    main()
