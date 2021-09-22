@@ -4,11 +4,12 @@ setup(  name='cameray',
         install_requires=[
             'networkx',
             'taichi',
-            'numpy'
+            'numpy',
+            'dearpygui'
         ],
         setup_requires=[],
         python_requires='>=3.6, <=3.9',
-        version='0.0.1',
+        version='0.0.2',
 
         author='Shuoliu Yang',
 
