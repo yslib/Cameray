@@ -37,7 +37,7 @@ and enter
 cameray
 ```
 
-to run it. (This must )
+to run it.
 
 Credits
 ---
