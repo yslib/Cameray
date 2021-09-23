@@ -123,7 +123,7 @@ class LensCanvasWidget(Widget):
 
         self._draw_impl(lenses, length, max_radius)
 
-    def draw_bound_rays(self, rays:np.array, count:int, color=[255.0,255.0,255.0,255.0], thickness=1.0):
+    def draw_rays(self, rays:np.array, count:int, color=[255.0,255.0,255.0,255.0], thickness=1.0, symetric=False):
         points = []
         point1 = []
         for i in range(count):
@@ -858,10 +858,10 @@ class LensDesignerWidget(Widget):
         self._update_camera(kwargs['lense_data'])
 
     def _paint_canvas(self):
-        ray_points = real_cam.get_ray_points()
+        ray_points = real_cam.get_ray_points_buffer()
         new_lense_data = real_cam.get_lenses_data()
         self._lense_canvas.draw_lenses(np.array(new_lense_data))
-        self._lense_canvas.draw_bound_rays(ray_points, real_cam.get_element_count() + 2, color=[0, 0, 255])
+        self._lense_canvas.draw_rays(ray_points, real_cam.get_element_count() + 2, color=[0, 0, 255])
 
 
     @msg
@@ -869,7 +869,6 @@ class LensDesignerWidget(Widget):
         real_cam.load_lens_data(lense_data)
         self._node_editor.get_focus_state() and real_cam.refocus(self._node_editor.get_focus_depth())
         if self._node_editor.get_keep_rendering():
-            # real_cam.recompute_exit_pupil()
             color_buffer.from_numpy(np.zeros((800, 600, 3)))
         real_cam.gen_draw_rays_from_film()
         self._paint_canvas()

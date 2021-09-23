@@ -5,7 +5,7 @@ from typing import List, Dict
 from .renderer_utils import refract
 
 max_elements = 30
-max_draw_rays = 20
+max_draw_rays = 100
 pupil_interval_count = 64
 eps = 1e-5
 inf = 9999999.0
@@ -79,11 +79,11 @@ class RealisticCamera:
         self.aperture_radius = ti.field(ti.f32)
         self.exitPupilBoundMin = ti.Vector.field(2, dtype=ti.f32)
         self.exitPupilBoundMax = ti.Vector.field(2, dtype=ti.f32)
-        self.draw_rays = ti.Vector.field(3, dtype=ti.f32)
+        self.ray_point_buffer = ti.Vector.field(3, dtype=ti.f32)
 
         ti.root.dense(ti.i, (max_elements, )).place(self.curvature_radius, self.thickness, self.eta, self.aperture_radius)
         ti.root.dense(ti.i, (pupil_interval_count, )).place(self.exitPupilBoundMin, self.exitPupilBoundMax)
-        ti.root.dense(ti.ij, (max_draw_rays, max_elements + 2)).place(self.draw_rays)
+        ti.root.dense(ti.ij, (max_draw_rays, max_elements + 2)).place(self.ray_point_buffer)
 
         self.camera2world_point = ti.Matrix([[1.0,0.0,0.0,0.0],[0.0,1.0,0.0,0.0],[0.0,0.0,1.0,0.0],[0.0,0.0,0.0,1.0]])
         self.camera2world_vec = ti.Matrix([[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]])
@@ -422,6 +422,10 @@ class RealisticCamera:
         rf = self.focus_thick_camera(focus_distance * 1000.0)
         self.thickness[self._elem_count - 1] = rf
 
+    def get_equavalent_aperture(self):
+        pass
+
+
     @ti.func
     def intersect_with_sphere(self,
                             center,
@@ -569,12 +573,12 @@ class RealisticCamera:
     @ti.kernel
     def gen_draw_rays_from_film(self):
         """
-        draw the bound ray
+        draw the bound ray, the index of the ray stored in the buffer is 0
         """
         r = self.aperture_radius[self._elem_count - 1]
         step = 0.01
         count = ti.cast(r / step,ti.i32)
-        for j in range(1):
+        for j in range(1):  # force serialized
             for i in range(count):
                 y = r - i * step
                 ori, dir = ti.Vector([0.0, 0.0, 0.0]), ti.Vector([y, 0.0, self.rear_z()])
@@ -584,11 +588,38 @@ class RealisticCamera:
                     break
 
     @ti.kernel
+    def gen_parallel_rays_from_scene(self, theta, count, initial_length):
+        """
+        draw the parallel rays from scene
+
+        :param theta: the angle of the parallel rays with respect to the optical axis, range from [-90, 90]
+        :param count: the count of the parallel rays to draw
+        :initial_length: the length of the scene-side rays
+        """
+        r = self.aperture_radius[0]
+        step =  2 * r / count
+        rad = math.radians(theta)
+        actual = 0
+        for _ in range(1):
+            for i in range(count):
+                y = r - i * step
+                surf, d = ti.Vector([y, 0.0, self.front_z()]), ti.Vector([math.sin(rad), 0.0, math.cos(rad)])
+                begin = surf - initial_length * d
+                ok, _, _ = self.gen_ray_from_scene(begin, d)
+                if ok:
+                    self.draw_ray_from_scene(begin, d, i)
+                    actual += 1
+        return actual
+
+
+    @ti.kernel
     def gen_draw_rays_from_scene(self):
         pass
 
     @ti.func
     def draw_ray_from_film(self, ori, dir, ind):
+        """
+        """
         ro, rd = ti.Vector([ori.x, ori.y, -ori.z]), ti.Vector([dir.x, dir.y, -dir.z]).normalized()
         elemZ = 0.0
         ok = True
@@ -618,7 +649,7 @@ class RealisticCamera:
                     ok = False
                     break
 
-                self.draw_rays[ind, ii] = ro
+                self.ray_point_buffer[ind, ii] = ro
 
                 ro = ti.Vector([hit.x, hit.y, hit.z])
 
@@ -632,8 +663,8 @@ class RealisticCamera:
                         break
                     rd = ti.Vector([d.x, d.y, d.z])
 
-        self.draw_rays[ind, self._elem_count] = ro
-        self.draw_rays[ind, self._elem_count + 1] = ro + rd * 20.0
+        self.ray_point_buffer[ind, self._elem_count] = ro
+        self.ray_point_buffer[ind, self._elem_count + 1] = ro + rd * 20.0
         # return ok, ti.Vector([ro.x, ro.y, -ro.z]), ti.Vector([rd.x, rd.y, -rd.z]).normalized()
 
     @ti.func
@@ -664,7 +695,7 @@ class RealisticCamera:
                     ok = False
                     break
 
-                self.draw_rays[ind, i] = ro
+                self.ray_point_buffer[ind, i] = ro
                 ro = ti.Vector([hit.x, hit.y, hit.z])
 
                 if not is_stop:
@@ -680,8 +711,8 @@ class RealisticCamera:
 
                 elemZ += self.thickness[i]
 
-        self.draw_rays[ind, self._elem_count] = ro
-        self.draw_rays[ind, self._elem_count + 1] = ro + rd * 20.0
+        self.ray_point_buffer[ind, self._elem_count] = ro
+        self.ray_point_buffer[ind, self._elem_count + 1] = ro + rd * 20.0
 
-    def get_ray_points(self):
-        return self.draw_rays.to_numpy()
+    def get_ray_points_buffer(self):
+        return self.ray_point_buffer.to_numpy()
