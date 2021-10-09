@@ -4,8 +4,9 @@ from typing import Callable, Dict, Any, List, Tuple
 import configparser
 
 sys.path.append('..')
+sys.path.append('.')
 import dearpygui.dearpygui as dpg
-from base.msg_queue import get_msg_queue, msg, get_coroutine
+from base.msg_queue import get_msg_queue, get_coroutine
 from gui.lens_designer import LensDesignerWidget
 
 CMR_CONFIG_FILE_PATH = r''

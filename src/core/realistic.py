@@ -588,7 +588,7 @@ class RealisticCamera:
                     break
 
     @ti.kernel
-    def gen_parallel_rays_from_scene(self, theta, count, initial_length):
+    def gen_parallel_rays_from_scene(self, theta:ti.f32, count:ti.i32, initial_length:ti.f32):
         """
         draw the parallel rays from scene
 

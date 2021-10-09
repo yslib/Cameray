@@ -8,7 +8,7 @@ setup(  name='cameray',
             'dearpygui'
         ],
         setup_requires=[],
-        python_requires='>=3.6, <=3.9',
+        python_requires='>=3.6, <=3.9.7',
         version='0.0.2',
 
         author='Shuoliu Yang',
