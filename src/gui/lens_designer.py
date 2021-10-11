@@ -4,10 +4,10 @@ import dearpygui.dearpygui as dpg
 from . import lens_preset
 from typing import List, Any, Callable, Dict
 from base.msg_queue import msg
-from gui.widget import Widget, PropertyWidget, AttributeValueType
+from gui.widget import Widget
 import numpy as np
 import networkx as nx
-from gui.lens_editor.node import SceneNode, FilmNode, LensSurfaceGroupNode
+from gui.lens_editor.node import SceneNode, FilmNode, LensSurfaceGroupNode, ApertureStop
 
 from core.renderer import real_cam, color_buffer
 class LensCanvasWidget(Widget):
@@ -484,10 +484,8 @@ class LensDesignerWidget(Widget):
         self._update_camera(kwargs['lense_data'])
 
     def _paint_canvas(self):
-        ray_points = real_cam.get_ray_points_buffer()
         new_lense_data = real_cam.get_lenses_data()
         self._lense_canvas.draw_lenses(np.array(new_lense_data))
-        self._lense_canvas.draw_rays(ray_points, real_cam.get_element_count() + 2, color=[0, 0, 255])
 
 
     @msg
@@ -497,4 +495,14 @@ class LensDesignerWidget(Widget):
         if self._node_editor.get_keep_rendering():
             color_buffer.from_numpy(np.zeros((800, 600, 3)))
         real_cam.gen_draw_rays_from_film()
+        ray_points = real_cam.get_ray_points_buffer()
+        self._lense_canvas.draw_rays(ray_points, real_cam.get_element_count() + 2, color=[0, 0, 255])
+
+        ray_count = self._node_editor._scene_node.get_param('ray_count')
+        ray_angle = self._node_editor._scene_node.get_param('ray_angle')
+        print(ray_count, ray_angle)
+        ray_count = real_cam.gen_parallel_rays_from_scene(ray_angle, ray_count, 20.0)
+        print('actual count: ', ray_count)
+        ray_points = real_cam.get_ray_points_buffer()
+
         self._paint_canvas()

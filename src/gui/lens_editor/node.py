@@ -154,6 +154,10 @@ class SceneNode(OutputNode):
     def get_focus_state(self):
         return self._param.enable_focus
 
+    def get_param(self, name):
+        return getattr(self._param, name)
+
+
 class FilmNodeParam(Widget):
     film_size = PropertyWidget(name='FilmSize', property_type=AttributeValueType.ATTRI_FLOATX,min_value=0.0,max_value=1000.0,size=2,width=100)
     render_window = PropertyWidget(name='RenderWindow', property_type=AttributeValueType.ATTRI_BOOL, width=100)
