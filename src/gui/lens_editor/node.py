@@ -6,6 +6,7 @@ from base.msg_queue import msg
 import dearpygui.dearpygui as dpg
 import numpy as np
 from core.renderer import real_cam, color_buffer, taichi_render
+from base.platform import get_home_dir
 
 
 """
@@ -130,11 +131,15 @@ class ApertureStop(MidNode):
 class SceneNodeParam(Widget):
     focus_depth = PropertyWidget(name='FocusDepth', property_type=AttributeValueType.ATTRI_FLOAT,min_value=0.0, max_value=10000.0,width=100)
     enable_focus = PropertyWidget(name='EnableFocus', property_type=AttributeValueType.ATTRI_BOOL, width=100)
+    ray_angle = PropertyWidget(name='ParallelRayAngle', property_type=AttributeValueType.ATTRI_FLOAT, min_value=0.0, max_value=60.0, width=100)
+    ray_count = PropertyWidget(name='ParallelRayCount', property_type=AttributeValueType.ATTRI_INT, min_value=2, max_value=100, width=100)
     def __init__(self, *, parent: int, callback: Callable[[Any], None]):
         super().__init__(parent=parent, callback=callback)
         self._widget_id = parent
         self.focus_depth = 1.0
         self.enable_focus = True
+        self.ray_angle = 0.0
+        self.ray_count = 5
 
 
 class SceneNode(OutputNode):
@@ -157,11 +162,12 @@ class FilmNodeParam(Widget):
         self._widget_id = parent
         self.film_size = (36.00,24.00)
         self.render_window = True
-        self._image = ImageViewer(parent=self.widget())
+        self.image_viewer = ImageViewer(parent=self.widget())
         self._enable_render = True
 
         if self._enable_render:
             self._render()
+
 
     @msg
     def _render(self):
@@ -174,7 +180,7 @@ class FilmNodeParam(Widget):
             if i % interval == 0 and i > 0:
                 img = color_buffer.to_numpy() * (1 / (i + 1))
                 img = np.sqrt(img / img.mean() * 0.24)
-                self._image.from_numpy(img)
+                self.image_viewer.from_numpy(img)
 
             i+=1
             if self._enable_render:
@@ -188,7 +194,7 @@ class FilmNodeParam(Widget):
         Filters the RenderWindow property changes
         '''
         if s == getattr(self, '_RenderWindow'):
-            dpg.configure_item(self._image.widget(), show=a)
+            dpg.configure_item(self.image_viewer.widget(), show=a)
             self._enable_render = a
             if self._enable_render:
                 self._render()
@@ -200,6 +206,23 @@ class FilmNode(InputNode):
         super().__init__(name='Film',parent=parent,callback=value_update_callback)
         attri = self.add_attribute(attri_name='film size',attri_type=dpg.mvNode_Attr_Static)
         self._param = FilmNodeParam(parent=attri,callback=self.callback())
+
+        self._save_dir_settings = dpg.add_button(parent=attri,label='Select directory...', callback=self._select_directory)
+        dpg.add_same_line()
+        self._dir_text = dpg.add_text(get_home_dir(),parent=attri)
+        self._save_button = dpg.add_button(parent=attri, label='Save', callback=self._save_callback)
+
+    def _save_callback(self, s, a, u):
+        path = dpg.get_value(self._dir_text)
+        self._param.image_viewer.save_image(dpg.get_value(self._dir_text))
+
+    def _select_directory(self, s,a,u):
+        with dpg.file_dialog(label='Select directory', directory_selector=True, callback=lambda s, a, u: self._update_dir_text(a.get('file_path_name', get_home_dir()))):
+            pass
+
+    def _update_dir_text(self, dir:str):
+        dir = dir.lstrip("\\")   # I don't known why there is a slash prefix on Windows
+        dpg.set_value(self._dir_text, dir)
 
     def get_film_size(self):
         return self._param.film_size

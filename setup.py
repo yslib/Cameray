@@ -5,10 +5,11 @@ setup(  name='cameray',
             'networkx',
             'taichi',
             'numpy',
-            'dearpygui'
+            'dearpygui',
+            'PIL'
         ],
         setup_requires=[],
-        python_requires='>=3.6, <=3.9.7',
+        python_requires='>=3.6, <3.10',
         version='0.0.2',
 
         author='Shuoliu Yang',

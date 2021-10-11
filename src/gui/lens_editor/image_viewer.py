@@ -1,7 +1,12 @@
+from os import pardir
 from typing import List
+
 from gui.widget import Widget
 import dearpygui.dearpygui as dpg
 import numpy as np
+from PIL import Image
+
+# from src.gui.lens_editor.node import FilmNodeParam
 
 class ImageViewer(Widget):
     def __init__(self, parent):
@@ -11,6 +16,7 @@ class ImageViewer(Widget):
             self._width:int = 0
             self._height:int = 0
             self._texture_id:int = None
+            self._numpy_image_data = None
 
     def _release_texture(self):
         if self._texture_id is not None:
@@ -30,11 +36,12 @@ class ImageViewer(Widget):
             return
         dpg.set_value(self._texture_id, norm_rbga)
 
-    def set_image_norm_rgba(self,width:int, height:int, rgba:List[float]):
+    def set_image_norm_rgba(self,width:int, height:int, rgba:np.array):
         """
         each channel of rgba is range from [0 1]
         """
-        self._set_or_recreate_texture(width,height,rgba)
+        self._set_or_recreate_texture(width,height,rgba.flatten())
+        self._numpy_image_data = rgba
 
     def from_numpy(self, data:np.ndarray):
         shape = data.shape
@@ -43,9 +50,9 @@ class ImageViewer(Widget):
             return
         if shape[2] == 3:
             rgba = np.concatenate((data, np.ones((shape[0],shape[1], 1),dtype=np.float32)), axis=2)
-            self.set_image_norm_rgba(shape[1],shape[0],rgba.flatten())
+            self.set_image_norm_rgba(shape[1],shape[0], rgba)
         elif shape[2] == 4:
-            self.set_image_norm_rgba(shape[1],shape[0],data.flatten())
+            self.set_image_norm_rgba(shape[1],shape[0], data)
         elif shape[2] == 2 or shape[2] == 1:
             pass
 
@@ -60,3 +67,23 @@ class ImageViewer(Widget):
 
     def valid(self)->bool:
         return self._width > 0 and self._height > 0 and self._texture_id != None
+
+    def save_image(self, dir='.'):
+        """[summary]
+
+        Args:
+            filename ([type]): [description]
+            path (str, optional): [description]. Defaults to '.'.
+        """
+        if self._numpy_image_data is None:
+            return
+        import os, time
+        filename = time.strftime('IMAGE_%Y-%m-%d %H%M%S', time.localtime(time.time()))
+        fullname = os.path.join(dir, filename + '.png')
+        count = 0
+        while os.path.exists(fullname):
+            fullname = os.path.join(dir, filename + '_'+str(count)+'.png')
+            count += 1
+        print('Save image ... ', fullname)
+        Image.fromarray(np.uint8(self._numpy_image_data * 255.0)).save(fullname)
+        print('Save done!')
