@@ -5,7 +5,8 @@ setup(  name='cameray',
             'networkx',
             'taichi',
             'numpy',
-            'dearpygui'
+            'dearpygui',
+            'dearpygui_ext'
         ],
         setup_requires=[],
         python_requires='>=3.6, <=3.9',
