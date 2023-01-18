@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from dearpygui.logger import mvLogger
+from dearpygui_ext.logger import mvLogger
 from typing import Callable, Any
 
 _logger = None
